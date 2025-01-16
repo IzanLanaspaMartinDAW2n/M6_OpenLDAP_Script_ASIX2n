@@ -6,6 +6,12 @@ ORG="ExampleOrg"
 ADMIN_PASSWORD="adminpassword"
 LDAP_BASE="dc=example,dc=com"
 
+# Verificar si el script se ejecuta como root
+if [[ $EUID -ne 0 ]]; then
+   echo "Aquest script s'ha d'executar com a root. Fes servir sudo."
+   exit 1
+fi
+
 # Actualizar sistema e instalar paquetes necesarios
 apt update && apt upgrade -y
 DEBIAN_FRONTEND=noninteractive apt install -y slapd ldap-utils libnss-ldap libpam-ldap nslcd
