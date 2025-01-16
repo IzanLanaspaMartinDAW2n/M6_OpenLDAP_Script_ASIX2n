@@ -8,45 +8,43 @@ LDAP_BASE="dc=example,dc=com"
 
 # Actualizar sistema e instalar paquetes necesarios
 apt update && apt upgrade -y
-apt install -y slapd ldap-utils libnss-ldap libpam-ldap nslcd
+DEBIAN_FRONTEND=noninteractive apt install -y slapd ldap-utils libnss-ldap libpam-ldap nslcd
 
-# Configuración de slapd
-dpkg-reconfigure slapd <<EOF
-no
-$DOMAIN
-$ORG
-$ADMIN_PASSWORD
-$ADMIN_PASSWORD
-HDB
-no
-no
-EOF
+# Configurar slapd automáticamente
+echo "slapd slapd/internal/generated_adminpw password $ADMIN_PASSWORD" | debconf-set-selections
+echo "slapd slapd/internal/adminpw password $ADMIN_PASSWORD" | debconf-set-selections
+echo "slapd slapd/domain string $DOMAIN" | debconf-set-selections
+echo "slapd shared/organization string $ORG" | debconf-set-selections
+echo "slapd slapd/no_configuration boolean false" | debconf-set-selections
+echo "slapd slapd/password1 password $ADMIN_PASSWORD" | debconf-set-selections
+echo "slapd slapd/password2 password $ADMIN_PASSWORD" | debconf-set-selections
+DEBIAN_FRONTEND=noninteractive dpkg-reconfigure slapd
 
 # Verificar instalación
-slapcat
+slapcat || { echo "Error: slapd no se instaló correctamente"; exit 1; }
 
-# Crear archivo para estructura de directorio
-echo "dn: ou=users,$LDAP_BASE
+# Crear archivos LDIF para agregar unidades organizativas, grupos y usuarios
+cat <<EOF > base.ldif
+dn: ou=users,$LDAP_BASE
 objectClass: organizationalUnit
-ou: users" > base.ldif
+ou: users
+EOF
 
-# Agregar unidad organizativa
-ldapadd -x -D "cn=admin,$LDAP_BASE" -w $ADMIN_PASSWORD -f base.ldif
+ldapadd -x -D "cn=admin,$LDAP_BASE" -w $ADMIN_PASSWORD -f base.ldif || { echo "Error al agregar la unidad organizativa"; exit 1; }
 
-# Crear archivo para grupo
-echo "dn: cn=developers,ou=users,$LDAP_BASE
+cat <<EOF > grp.ldif
+dn: cn=developers,ou=users,$LDAP_BASE
 objectClass: posixGroup
 cn: developers
-gidNumber: 1001" > grp.ldif
+gidNumber: 1001
+EOF
 
-# Agregar grupo
-ldapadd -x -D "cn=admin,$LDAP_BASE" -w $ADMIN_PASSWORD -f grp.ldif
+ldapadd -x -D "cn=admin,$LDAP_BASE" -w $ADMIN_PASSWORD -f grp.ldif || { echo "Error al agregar el grupo"; exit 1; }
 
-# Crear hash de contraseña para usuario
 USER_PASSWORD_HASH=$(slappasswd -s "userpassword")
 
-# Crear archivo para usuario
-echo "dn: uid=asixero,ou=users,$LDAP_BASE
+cat <<EOF > user.ldif
+dn: uid=asixero,ou=users,$LDAP_BASE
 objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: top
@@ -57,14 +55,10 @@ uidNumber: 1001
 gidNumber: 1001
 homeDirectory: /home/asixero
 loginShell: /bin/bash
-userPassword: $USER_PASSWORD_HASH" > user.ldif
+userPassword: $USER_PASSWORD_HASH
+EOF
 
-# Agregar usuario
-ldapadd -x -D "cn=admin,$LDAP_BASE" -w $ADMIN_PASSWORD -f user.ldif
-
-# Verificar adiciones
-slapcat | grep asixero
-ldapsearch -x -LLL -b "$LDAP_BASE" "uid=asixero"
+ldapadd -x -D "cn=admin,$LDAP_BASE" -w $ADMIN_PASSWORD -f user.ldif || { echo "Error al agregar el usuario"; exit 1; }
 
 # Configurar NSS y PAM para autenticación LDAP
 sed -i '/passwd:/ s/$/ ldap/' /etc/nsswitch.conf
@@ -74,7 +68,6 @@ sed -i '/shadow:/ s/$/ ldap/' /etc/nsswitch.conf
 echo "session required pam_mkhomedir.so skel=/etc/skel umask=0022" >> /etc/pam.d/common-session
 
 # Comprobar configuración
-getent passwd asixero
+getent passwd asixero && echo "Usuario asixero configurado correctamente."
 
-# Finalización
 echo "Configuración LDAP completada con éxito."
