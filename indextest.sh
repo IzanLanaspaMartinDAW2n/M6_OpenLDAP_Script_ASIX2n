@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#Aquest Codi té una funcio d'errors per a que et donis compte si falla algun pas
 # Variables
 DOMAIN="example.com"
 ORG="ExampleOrg"
