@@ -4,6 +4,12 @@
 echo "Introduce la IP del servidor LDAP:"
 read LDAP_SERVER_IP
 
+# Verificar si la IP es válida
+if [[ ! $LDAP_SERVER_IP =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then
+    echo "Error: La IP introducida no es válida."
+    exit 1
+fi
+
 # Variables
 LDAP_BASE="dc=example,dc=com"  # Cambiar al dominio correcto
 LDAP_ADMIN_DN="cn=admin,$LDAP_BASE"  # DN del administrador
