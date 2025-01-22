@@ -1,46 +1,38 @@
-Primer codi de prova amb bat per a Windows
-
 @echo off
+:: Sol·licitar la IP del servidor LDAP
+set /p LDAP_SERVER_IP=Introdueix la IP del servidor LDAP: 
 
-REM Solicitar la IP del servidor LDAP
-set /p LDAP_SERVER_IP=Introduce la IP del servidor LDAP:
+:: Variables
+set LDAP_BASE=dc=example,dc=com
+set LDAP_ADMIN_DN=cn=admin,%LDAP_BASE%
+set LDAP_ADMIN_PASSWORD=adminpassword
 
-REM Variables
-set "LDAP_BASE=dc=example,dc=com"  REM Cambiar al dominio correcto
-set "LDAP_ADMIN_DN=cn=admin,%LDAP_BASE%"  REM DN del administrador
-set "LDAP_ADMIN_PASSWORD=adminpassword"  REM Cambiar por la contraseña correcta
+:: Verificar connexió al servidor LDAP
+echo Verificant la connexió al servidor LDAP...
+dsquery * ldap://%LDAP_SERVER_IP% -b %LDAP_BASE% -s sub -d %LDAP_ADMIN_DN% -w %LDAP_ADMIN_PASSWORD% > nul
+if errorlevel 1 (
+    echo Error: No s'ha pogut connectar al servidor LDAP. Revisa la IP, DN i contrasenya.
+    pause
+    exit /b 1
+)
+echo Connexió exitosa al servidor LDAP.
 
-REM Actualizar sistema e instalar paquetes necesarios
-echo Actualizando sistema...
-REM Para Windows, tendrás que usar herramientas específicas como Chocolatey para gestionar paquetes.
-REM Busca e instala paquetes equivalentes desde la línea de comandos según tus necesidades.
+:: Configurar LDAP al sistema
+echo Configurant LDAP al sistema...
 
-REM Configurar NSS y PAM para autenticación LDAP
-REM Estos comandos no tienen una equivalencia directa en Windows
-echo Configurando autenticación LDAP...
-REM Aunque Windows sí soporta LDAP, la configuración es diferente y más compleja.
-REM Debes usar las herramientas de administración y configuración de Windows para integrar LDAP.
+:: Configuració del registre per a LDAP (exemple genèric)
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v GINA /t REG_SZ /d Msgina.dll /f
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\LDAP" /v Server /t REG_SZ /d %LDAP_SERVER_IP% /f
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\LDAP" /v BaseDN /t REG_SZ /d %LDAP_BASE% /f
 
-REM Editar /etc/nsswitch.conf para incluir LDAP Comandos como sed no tienen equivalentes directos en Windows. 
-REM Debes usar herramientas de edición de archivos específicas para Windows o hacerlo manualmente.
-echo Configurando autenticación...
+:: Prova d'autenticació amb LDAP
+echo Provant autenticació amb LDAP...
+dsquery * ldap://%LDAP_SERVER_IP% -b %LDAP_BASE% -s sub -d %LDAP_ADMIN_DN% -w %LDAP_ADMIN_PASSWORD% || (
+    echo Error en la prova d'autenticació LDAP.
+    pause
+    exit /b 1
+)
 
-REM Probar configuración - En lugar de ldapsearch usamos un comando similar en Windows
-REM Windows tiene sus propias utilidades de línea de comandos para LDAP, como dsquery o powershell cmdlets
-REM Aquí, usa el comando apropiado para probar la conexión y autenticación
-REM Si la prueba falla, muestra un mensaje de error y sal del script
-echo Probando configuración...
-REM Usar una alternativa como dsquery o un script PowerShell:
-
-REM Ejemplo usando PowerShell para LDAP bind (setup más complejo):
-powershell -Command ^
-    "$SecurePassword = ConvertTo-SecureString '%LDAP_ADMIN_PASSWORD%' -AsPlainText -Force; ^
-    $credential = New-Object System.Management.Automation.PSCredential ('%LDAP_ADMIN_DN%', $SecurePassword); ^
-    $ldap = New-Object System.DirectoryServices.DirectoryEntry('LDAP://%LDAP_SERVER_IP%', $credential); ^
-    if ($ldap.Ping()) { echo Conexion LDAP exitosa } else { echo Error: No se pudo conectar al servidor LDAP.; exit /b 1; }"
-
-REM Finalización
-echo Configuración del cliente LDAP completada con éxito. Prueba autenticación con getent passwd.
-
+:: Finalització
+echo Configuració del client LDAP completada correctament.
 pause
-
