@@ -1,4 +1,31 @@
 @echo off
+:: Comprovar si dsquery està disponible
+echo Verificant si 'dsquery' està instal·lat...
+where dsquery >nul 2>&1
+if errorlevel 1 (
+    echo 'dsquery' no està instal·lat. Intentant instal·lar-lo...
+    
+    :: Verificar si el sistema suporta RSAT i instal·lar
+    for /f "tokens=2 delims==" %%i in ('wmic os get version /value ^| find "="') do set WINVER=%%i
+    if "%WINVER%" geq "10.0.17763" (
+        echo Instal·lant RSAT amb DISM...
+        dism /online /add-capability /capabilityname:Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0
+        if errorlevel 1 (
+            echo Error: No s'ha pogut instal·lar RSAT. Comprova la connexió a Internet o els permisos d'administrador.
+            pause
+            exit /b 1
+        )
+        echo RSAT instal·lat correctament.
+    ) else (
+        echo La versió de Windows no suporta aquesta instal·lació automàtica.
+        echo Visita https://aka.ms/rsat per descarregar les eines RSAT manualment.
+        pause
+        exit /b 1
+    )
+) else (
+    echo 'dsquery' està disponible.
+)
+
 :: Sol·licitar la IP del servidor LDAP
 set /p LDAP_SERVER_IP=Introdueix la IP del servidor LDAP: 
 
