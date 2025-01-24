@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <startup>
+        <supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.0"/>
+    </startup>
+    <pGinaConfiguration>
+        <PluginAssemblies>
+            <string>Plugins.Ldap.dll</string>
+        </PluginAssemblies>
+        <Plugins>
+            <Plugins.Ldap>
+                <LdapServer>{LDAP_SERVER}</LdapServer>
+                <LdapPort>{LDAP_PORT}</LdapPort>
+                <SearchDN>{LDAP_BIND_DN}</SearchDN>
+                <SearchPassword>{LDAP_PASSWORD}</SearchPassword>
+                <UserDNPattern></UserDNPattern>
+                <GroupDNPattern></GroupDNPattern>
+                <SearchFilter>(uid=%u)</SearchFilter>
+                <GroupMembershipFilter>(memberUid=%u)</GroupMembershipFilter>
+                <UseSsl>false</UseSsl>
+                <ValidateServerCertificate>false</ValidateServerCertificate>
+                <RequireGroupMembership>false</RequireGroupMembership>
+                <GroupAuthzRules />
+            </Plugins.Ldap>
+        </Plugins>
+    </pGinaConfiguration>
+</configuration>
