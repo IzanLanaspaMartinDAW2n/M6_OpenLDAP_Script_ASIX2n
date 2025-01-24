@@ -1,0 +1,66 @@
+### Explicación de los Scripts
+
+#### 1. Script: Configuración de OpenLDAP para pGina
+##### Descripción general:
+Este script configura el archivo `pGina.Configuration.exe.config` para que pGina se integre con un servidor LDAP. 
+
+##### Pasos principales del script:
+1. **Definición de variables**:
+   - Establece las rutas de archivos y configuraciones como la dirección del servidor LDAP, el puerto, el usuario de enlace (bind DN), y la contraseña.
+
+2. **Verificación de archivos necesarios**:
+   - Comprueba si el archivo de plantilla `template.xml` existe.
+
+3. **Generación de archivo temporal de configuración**:
+   - Lee la plantilla `template.xml`.
+   - Reemplaza los marcadores de posición (`{LDAP_SERVER}`, `{LDAP_PORT}`, etc.) con los valores especificados en las variables del script.
+
+4. **Validación del archivo temporal**:
+   - Verifica que el archivo temporal de configuración se haya generado correctamente.
+
+5. **Actualización del archivo de configuración de pGina**:
+   - Sobrescribe el archivo existente con la configuración generada.
+
+6. **Limpieza**:
+   - Elimina el archivo temporal creado durante el proceso.
+
+##### Qué hace este script:
+Configura pGina para usar OpenLDAP proporcionando los detalles de conexión necesarios, como la dirección del servidor, el puerto, y las credenciales de autenticación.
+
+---
+
+#### 2. Script: Instalación de pGina
+##### Descripción general:
+Este script automatiza la descarga e instalación de pGina desde el repositorio oficial de GitHub.
+
+##### Pasos principales del script:
+1. **Definición de variables**:
+   - Especifica la URL de descarga del instalador de pGina.
+   - Define el directorio donde se guardará el instalador descargado.
+
+2. **Creación del directorio de descarga**:
+   - Si el directorio `C:\Descargas` no existe, lo crea.
+
+3. **Descarga del instalador**:
+   - Utiliza PowerShell para descargar el instalador de pGina desde la URL proporcionada.
+
+4. **Verificación de la descarga**:
+   - Comprueba si el archivo descargado existe y muestra un mensaje de error si la descarga falló.
+
+5. **Ejecución del instalador**:
+   - Inicia el instalador de pGina.
+
+6. **Limpieza**:
+   - Elimina el archivo del instalador después de que se haya ejecutado.
+
+##### Qué hace este script:
+Descarga e instala pGina en el sistema de manera automática, asegurándose de que los archivos innecesarios se eliminen después.
+
+---
+
+### Conexión entre los dos scripts
+Aunque ahora están separados, el flujo lógico es:
+1. Ejecutar primero el script de instalación de pGina.
+   - Esto asegura que pGina esté instalado en el sistema.
+2. Ejecutar después el script de configuración de OpenLDAP.
+   - Esto configura pGina para que utilice un servidor LDAP especificado para la autenticación.
